@@ -16,6 +16,7 @@
 #include <iterator>
 
 #include "particle_filter.h"
+#include "helper_functions.h"
 
 using namespace std;
 
@@ -65,45 +66,48 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
     }
 }
 
-void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::vector<LandmarkObs>& observations) {
-// TODO: Find the predicted measurement that is closest to each observed measurement and assign the 
-//   observed measurement to this particular landmark.
-// NOTE: this method will NOT be called by the grading code. But you will probably find it useful to 
-//   implement this method and use it as a helper during the updateWeights phase.
+void ParticleFilter::dataAssociation(std::vector<LandmarkObs> in_range, std::vector<LandmarkObs>& observations) {
+    for (LandmarkObs curObs : observations) {
+        double shortest = INFINITY;
+        int closest_landmark = 0; //TODO: better default when in_range is empty??
+        for (const LandmarkObs curL : in_range) {
+            const double curDist = dist(curL.x, curL.y, curObs.x, curObs.y);
+            if (curDist < shortest) {
+                closest_landmark = curL.id;
+                shortest = curDist;
+            }
+        }
 
+        curObs.id = closest_landmark;
+    }
 }
 
 void ParticleFilter::updateWeights(double sensor_range, double std_landmark[], 
 const std::vector<LandmarkObs> &observations, const Map &map_landmarks) {
 // TODO: Update the weights of each particle using a mult-variate Gaussian distribution. You can read
 //   more about this distribution here: https://en.wikipedia.org/wiki/Multivariate_normal_distribution
-// NOTE: The observations are given in the VEHICLE'S coordinate system. Your particles are located
-//   according to the MAP'S coordinate system. You will need to transform between the two systems.
-//   Keep in mind that this transformation requires both rotation AND translation (but no scaling).
-//   The following is a good resource for the theory:
-//   https://www.willamette.edu/~gorr/classes/GeneralGraphics/Transforms/transforms2d.htm
-//   and the following is a good resource for the actual equation to implement (look at equation 
-//   3.33
-//   http://planning.cs.uiuc.edu/node99.html
-
 
     for (const Particle particle : particles) {
         std::vector<LandmarkObs> converted = convert_observations(particle, observations);
+        std::vector<LandmarkObs> in_range = find_in_range(map_landmarks.landmark_list, particle, sensor_range);
+        dataAssociation(in_range, converted);
+
     }
 
 }
 
-/*
- * _m == map coordinates
- * _p == map particle coordinates (aka: vehicle)
- * _c == car observation coordinates (aka: sensor provided)
- *
- * x_m​ = x_p​ + (cos(θ) * x_c​) − (sin(θ) * y_c​)
- * y_m​ = y_p​ + (sin(θ) * x_c) + (cos(θ) * y_c​)
- */
 std::vector<LandmarkObs> ParticleFilter::convert_observations(const Particle particle,
                                                               const std::vector<LandmarkObs> &observations) {
     vector<LandmarkObs> converted;
+
+    /*
+     * _m == map coordinates
+     * _p == map particle coordinates (aka: vehicle)
+     * _c == car observation coordinates (aka: sensor provided)
+     *
+     * x_m​ = x_p​ + (cos(θ) * x_c​) − (sin(θ) * y_c​)
+     * y_m​ = y_p​ + (sin(θ) * x_c) + (cos(θ) * y_c​)
+     */
 
     for (const LandmarkObs curObs : observations) {
         const double x = particle.x + cos(particle.theta) * curObs.x - sin(particle.theta) * curObs.y;
@@ -114,6 +118,22 @@ std::vector<LandmarkObs> ParticleFilter::convert_observations(const Particle par
     }
 
     return converted;
+}
+
+
+std::vector<LandmarkObs> ParticleFilter::find_in_range(const std::vector<Map::single_landmark_s> map_landmarks,
+                                                       const Particle particle,
+                                                       const double sensor_range) {
+
+    vector<LandmarkObs> in_range;
+    for (const Map::single_landmark_s curLandmark : map_landmarks) {
+        const double cur_dist = dist(particle.x, particle.y, curLandmark.x_f, curLandmark.y_f);
+        if (cur_dist <= sensor_range) {
+            in_range.push_back({curLandmark.id_i, curLandmark.x_f, curLandmark.y_f});
+        }
+    }
+
+    return in_range;
 }
 
 void ParticleFilter::resample() {

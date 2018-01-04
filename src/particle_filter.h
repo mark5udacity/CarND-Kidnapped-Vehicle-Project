@@ -56,6 +56,11 @@ private:
 	// Takes vehicle-based-coord observations and translate them into map-based-coordinates
 	std::vector<LandmarkObs> convert_observations(const Particle particle, const std::vector<LandmarkObs> &observations);
 
+    // Find map landmarks with-in sensor range
+    std::vector<LandmarkObs> find_in_range(const std::vector<Map::single_landmark_s> map_landmarks,
+                                           const Particle particle,
+                                           double sensor_range);
+
 public:
 	
 	// Set of current particles
@@ -93,10 +98,10 @@ public:
 	/**
 	 * dataAssociation Finds which observations correspond to which landmarks (likely by using
 	 *   a nearest-neighbors data association).
-	 * @param predicted Vector of predicted landmark observations
+	 * @param in_range Vector of predicted landmark observations
 	 * @param observations Vector of landmark observations
 	 */
-	void dataAssociation(std::vector<LandmarkObs> predicted, std::vector<LandmarkObs>& observations);
+	void dataAssociation(std::vector<LandmarkObs> in_range, std::vector<LandmarkObs>& observations);
 	
 	/**
 	 * updateWeights Updates the weights for each particle based on the likelihood of the 
