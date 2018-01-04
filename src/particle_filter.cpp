@@ -2,7 +2,7 @@
  * particle_filter.cpp
  *
  *  Created on: Dec 12, 2016
- *      Author: Tiffany Huang
+ *      Author: Tiffany Huang, Mark Veronda
  */
 
 #include <random>
@@ -20,11 +20,25 @@
 using namespace std;
 
 void ParticleFilter::init(double x, double y, double theta, double std[]) {
-	// TODO: Set the number of particles. Initialize all particles to first position (based on estimates of 
-	//   x, y, theta and their uncertainties from GPS) and all weights to 1. 
-	// Add random Gaussian noise to each particle.
-	// NOTE: Consult particle_filter.h for more information about this method (and others in this file).
+    if (is_initialized) {
+        cout << "WARN: Already been initialized, why is this being called again!?" << endl;
+        return;
+    }
 
+    dist_x = *new normal_distribution<double>(x, std[0]);
+    dist_y = *new normal_distribution<double>(y, std[1]);
+    dist_theta = *new normal_distribution<double>(theta, std[2]);
+
+    num_particles = NUM_PARTICLES;
+    const double uniform_wieght = 1. / num_particles;
+    for (int i = 0; i < num_particles; i++) {
+        particles.push_back(Particle{i, dist_x(gen), dist_y(gen), dist_theta(gen), uniform_wieght});
+        //cout << "ps: " << particles[particles.size() - 1] << endl;
+    }
+
+    cout << "Created " << num_particles << " particles!" << "\n";
+
+    is_initialized = true;
 }
 
 void ParticleFilter::prediction(double delta_t, double std_pos[], double velocity, double yaw_rate) {

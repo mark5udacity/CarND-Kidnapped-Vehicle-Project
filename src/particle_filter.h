@@ -3,13 +3,17 @@
  *
  * 2D particle filter class.
  *  Created on: Dec 12, 2016
- *      Author: Tiffany Huang
+ *      Author: Tiffany Huang, Mark Veronda
  */
 
 #ifndef PARTICLE_FILTER_H_
 #define PARTICLE_FILTER_H_
 
+//TODO: experiment with num_p when everything else is done
+static const int NUM_PARTICLES = 1000;
+
 #include "helper_functions.h"
+#include <random>
 
 struct Particle {
 
@@ -21,23 +25,32 @@ struct Particle {
 	std::vector<int> associations;
 	std::vector<double> sense_x;
 	std::vector<double> sense_y;
+
+	friend std::ostream& operator<<(std::ostream& out, const Particle &p) {
+		return out << p.id << "(" << p.x << "," << p.y << "," << p.theta << ")" << "\n";
+	}
 };
 
 
 
 class ParticleFilter {
-	
+
+private:
 	// Number of particles to draw
-	int num_particles; 
-	
-	
-	
+	int num_particles;
+
 	// Flag, if filter is initialized
 	bool is_initialized;
-	
+
 	// Vector of weights of all particles
 	std::vector<double> weights;
-	
+
+	// Distributions
+	std::default_random_engine gen;
+	std::normal_distribution<double> dist_x;
+	std::normal_distribution<double> dist_y;
+	std::normal_distribution<double> dist_theta;
+
 public:
 	
 	// Set of current particles
@@ -116,7 +129,5 @@ public:
 		return is_initialized;
 	}
 };
-
-
 
 #endif /* PARTICLE_FILTER_H_ */
