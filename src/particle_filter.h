@@ -51,6 +51,11 @@ private:
 	std::normal_distribution<double> dist_y;
 	std::normal_distribution<double> dist_theta;
 
+	// helper functions
+
+	// Takes vehicle-based-coord observations and translate them into map-based-coordinates
+	std::vector<LandmarkObs> convert_observations(const Particle particle, const std::vector<LandmarkObs> &observations);
+
 public:
 	
 	// Set of current particles

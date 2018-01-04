@@ -85,6 +85,35 @@ const std::vector<LandmarkObs> &observations, const Map &map_landmarks) {
 //   and the following is a good resource for the actual equation to implement (look at equation 
 //   3.33
 //   http://planning.cs.uiuc.edu/node99.html
+
+
+    for (const Particle particle : particles) {
+        std::vector<LandmarkObs> converted = convert_observations(particle, observations);
+    }
+
+}
+
+/*
+ * _m == map coordinates
+ * _p == map particle coordinates (aka: vehicle)
+ * _c == car observation coordinates (aka: sensor provided)
+ *
+ * x_m​ = x_p​ + (cos(θ) * x_c​) − (sin(θ) * y_c​)
+ * y_m​ = y_p​ + (sin(θ) * x_c) + (cos(θ) * y_c​)
+ */
+std::vector<LandmarkObs> ParticleFilter::convert_observations(const Particle particle,
+                                                              const std::vector<LandmarkObs> &observations) {
+    vector<LandmarkObs> converted;
+
+    for (const LandmarkObs curObs : observations) {
+        const double x = particle.x + cos(particle.theta) * curObs.x - sin(particle.theta) * curObs.y;
+        const double y = particle.y + sin(particle.theta) * curObs.x + cos(particle.theta) * curObs.y;
+        converted.push_back({curObs.id, x, y});
+        //cout << "observed: (" << curObs.x <<", " << curObs.y
+        //     << ") converted: " << curObs.id << "(" << x << ", " << y << ")" << "\n";
+    }
+
+    return converted;
 }
 
 void ParticleFilter::resample() {
