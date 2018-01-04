@@ -38,14 +38,15 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 
     cout << "Created " << num_particles << " particles!" << "\n";
 
+    // For later use with Gaussian noise
+    dist_x = *new normal_distribution<double>(0., std[0]);
+    dist_y = *new normal_distribution<double>(0., std[1]);
+    dist_theta = *new normal_distribution<double>(0., std[2]);
+
     is_initialized = true;
 }
 
 void ParticleFilter::prediction(double delta_t, double std_pos[], double velocity, double yaw_rate) {
-	// TODO: ... and add random Gaussian noise.
-	// NOTE: When adding noise you may find std::normal_distribution and std::default_random_engine useful.
-	//  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
-	//  http://www.cplusplus.com/reference/random/default_random_engine/
 
     /*
      * Transformation equations
@@ -57,9 +58,9 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
     for (Particle particle : particles) {
         const double v_over_theta = velocity / yaw_rate;
         const double theta_dt = yaw_rate * delta_t;
-        const double new_orientation = particle.theta + theta_dt;
-        particle.x += v_over_theta * (sin(new_orientation) - sin(particle.theta));
-        particle.y += v_over_theta * (cos(particle.theta) - cos(new_orientation));
+        const double new_orientation = particle.theta + theta_dt + dist_theta(gen);
+        particle.x += v_over_theta * (sin(new_orientation) - sin(particle.theta)) + dist_x(gen);
+        particle.y += v_over_theta * (cos(particle.theta) - cos(new_orientation)) + dist_y(gen);
         particle.theta = new_orientation;
     }
 }
