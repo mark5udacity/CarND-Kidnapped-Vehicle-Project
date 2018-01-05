@@ -57,11 +57,18 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
      */
 
     for (Particle particle : particles) {
-        const double v_over_theta = velocity / yaw_rate;
         const double theta_dt = yaw_rate * delta_t;
         const double new_orientation = particle.theta + theta_dt + dist_theta(gen);
-        particle.x += v_over_theta * (sin(new_orientation) - sin(particle.theta)) + dist_x(gen);
-        particle.y += v_over_theta * (cos(particle.theta) - cos(new_orientation)) + dist_y(gen);
+        if (fabs(yaw_rate) > 0.001) {
+            const double v_over_theta = velocity / yaw_rate;
+            particle.x += v_over_theta * (sin(new_orientation) - sin(particle.theta)) + dist_x(gen);
+            particle.y += v_over_theta * (cos(particle.theta) - cos(new_orientation)) + dist_y(gen);
+        } else {
+            const double velo_dt = velocity * delta_t;
+            particle.x += velo_dt * cos(new_orientation) + dist_x(gen);
+            particle.y += velo_dt * sin(new_orientation) + dist_y(gen);
+        }
+
         particle.theta = new_orientation;
     }
 }
