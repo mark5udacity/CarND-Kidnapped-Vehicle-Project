@@ -10,7 +10,7 @@
 #define PARTICLE_FILTER_H_
 
 //TODO: experiment with num_p when everything else is done
-static const int NUM_PARTICLES = 1000;
+static const int NUM_PARTICLES = 64;
 
 #include "helper_functions.h"
 #include <random>

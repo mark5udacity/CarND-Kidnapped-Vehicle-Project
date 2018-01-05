@@ -31,7 +31,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
     dist_theta = *new normal_distribution<double>(theta, std[2]);
 
     num_particles = NUM_PARTICLES;
-    const double uniform_weight = 1. / num_particles;
+    const double uniform_weight = 1. ; /// num_particles;
     for (int i = 0; i < num_particles; i++) {
         particles.push_back(Particle{i, dist_x(gen), dist_y(gen), dist_theta(gen), uniform_weight});
         //cout << "ps: " << particles[particles.size() - 1] << endl;
@@ -97,7 +97,7 @@ void ParticleFilter::updateWeights(double sensor_range,
         for (const LandmarkObs curObs : converted) {
             int closestIdx = curObs.id - 1;
             if (closestIdx < 0) {
-// Or could throw exception and check this much earlier than this point
+                // Or could throw exception and check this much earlier than this point
                 cerr << "ERROR: Did not expect any Landmark ID to be less than 1, but was: " << closestIdx + 1 << "\n";
                 cout << "ERROR: Did not expect any Landmark ID to be less than 1, but was: " << closestIdx + 1 << "\n";
                 continue;
@@ -106,11 +106,18 @@ void ParticleFilter::updateWeights(double sensor_range,
             const Map::single_landmark_s closest = map_landmarks.landmark_list[closestIdx];
             const LandmarkObs closestLandmark = {closest.id_i, closest.x_f, closest.y_f};
             const double curWeight = calculateWeight(curObs, closestLandmark, std_landmark);
-
-            totalWeight *= curWeight;
+            if (curWeight > 0.) {
+                totalWeight *= curWeight;
+            } else {
+                //cout << "Found non-positive weight!! : " << curWeight << "\n";
+            }
         }
 
-        it->weight = totalWeight;
+        if (totalWeight > 0.) {
+            it->weight = totalWeight;
+        } else {
+            //cout << "Found non-positive weight!! : " << totalWeight << "\n";
+        }
     }
 }
 
