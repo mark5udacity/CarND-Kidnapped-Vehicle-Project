@@ -83,18 +83,35 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> in_range, std::vec
     }
 }
 
-void ParticleFilter::updateWeights(double sensor_range, double std_landmark[], 
-const std::vector<LandmarkObs> &observations, const Map &map_landmarks) {
-// TODO: Update the weights of each particle using a mult-variate Gaussian distribution. You can read
-//   more about this distribution here: https://en.wikipedia.org/wiki/Multivariate_normal_distribution
-
-    for (const Particle particle : particles) {
+void ParticleFilter::updateWeights(double sensor_range,
+                                   double std_landmark[],
+                                   const std::vector<LandmarkObs> &observations,
+                                   const Map &map_landmarks) {
+    for (auto it = particles.begin(); it != particles.end(); it++) {
+        const Particle particle = *it;
         std::vector<LandmarkObs> converted = convert_observations(particle, observations);
         std::vector<LandmarkObs> in_range = find_in_range(map_landmarks.landmark_list, particle, sensor_range);
         dataAssociation(in_range, converted);
 
-    }
+        double totalWeight = 1.; // TODO: Unspecified what to do when empty landmarks??
+        for (const LandmarkObs curObs : converted) {
+            int closestIdx = curObs.id - 1;
+            if (closestIdx < 0) {
+// Or could throw exception and check this much earlier than this point
+                cerr << "ERROR: Did not expect any Landmark ID to be less than 1, but was: " << closestIdx + 1 << "\n";
+                cout << "ERROR: Did not expect any Landmark ID to be less than 1, but was: " << closestIdx + 1 << "\n";
+                continue;
+            }
 
+            const Map::single_landmark_s closest = map_landmarks.landmark_list[closestIdx];
+            const LandmarkObs closestLandmark = {closest.id_i, closest.x_f, closest.y_f};
+            const double curWeight = calculateWeight(curObs, closestLandmark, std_landmark);
+
+            totalWeight *= curWeight;
+        }
+
+        it->weight = totalWeight;
+    }
 }
 
 std::vector<LandmarkObs> ParticleFilter::convert_observations(const Particle particle,
@@ -134,6 +151,21 @@ std::vector<LandmarkObs> ParticleFilter::find_in_range(const std::vector<Map::si
     }
 
     return in_range;
+}
+
+double ParticleFilter::calculateWeight(const LandmarkObs obs, const LandmarkObs lmark, const double std[]) {
+    /*
+     * P(x,y)= 1 / (2 * π * σ_x​ * σ_y​)​ exp −( (x − μ_x​ )^2 / 2 * σ_x^2​
+     *                                             +  (y − μ_y​)^2 / 2 * σ_y^2​​ )
+     *
+     * x, y = observation in map's x,y coords
+     * μ = nearest landmark coords
+     */
+    const double gauss_norm = (1 / (2 * M_PI * std[0] * std[1]));
+    const double exponent = (pow(obs.x - lmark.x, 2) / (2 * pow(std[0], 2)))
+                                 + (pow(obs.y - lmark.y, 2) / (2 * pow(std[1], 2)));
+
+    return gauss_norm * exp(-exponent);
 }
 
 void ParticleFilter::resample() {
