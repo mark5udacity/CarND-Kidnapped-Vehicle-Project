@@ -169,10 +169,20 @@ double ParticleFilter::calculateWeight(const LandmarkObs obs, const LandmarkObs 
 }
 
 void ParticleFilter::resample() {
-// TODO: Resample particles with replacement with probability proportional to their weight. 
-// NOTE: You may find std::discrete_distribution helpful here.
-//   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
+    std::vector<double> weights;
+    std::transform(particles.begin(), particles.end(),
+                   std::back_inserter(weights),
+                   [](const Particle& p){ return p.weight; });
 
+    std::discrete_distribution<> weights_dist(weights.begin(), weights.end());
+
+    std::vector<Particle> resampled;
+    for (int i = 0; i < num_particles; i++) {
+        resampled.push_back(particles[weights_dist(gen)]);
+    }
+
+    cout << "all done!" << endl;
+    particles = resampled;
 }
 
 Particle ParticleFilter::SetAssociations(Particle& particle, const std::vector<int>& associations, 
