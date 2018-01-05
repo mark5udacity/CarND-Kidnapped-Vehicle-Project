@@ -9,8 +9,7 @@
 #ifndef PARTICLE_FILTER_H_
 #define PARTICLE_FILTER_H_
 
-//TODO: experiment with num_p when everything else is done
-static const int NUM_PARTICLES = 64;
+static const int NUM_PARTICLES = 55;
 
 #include "helper_functions.h"
 #include <random>
@@ -36,14 +35,14 @@ struct Particle {
 class ParticleFilter {
 
 private:
+
+	int num_turns;
+
 	// Number of particles to draw
 	int num_particles;
 
 	// Flag, if filter is initialized
 	bool is_initialized;
-
-	// Vector of weights of all particles
-	std::vector<double> weights;
 
 	// Distributions
 	std::default_random_engine gen;

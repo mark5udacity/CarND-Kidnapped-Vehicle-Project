@@ -56,7 +56,9 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
      * θ_f​ = θ_0​ + θ˙(dt)
      */
 
-    for (Particle particle : particles) {
+    int curPid = 0;
+    for (Particle& particle : particles) {
+        particle.id = curPid++;
         const double theta_dt = yaw_rate * delta_t;
         const double new_orientation = particle.theta + theta_dt + dist_theta(gen);
         if (fabs(yaw_rate) > 0.001) {
@@ -101,6 +103,10 @@ void ParticleFilter::updateWeights(double sensor_range,
         dataAssociation(in_range, converted);
 
         double totalWeight = 1.; // TODO: Unspecified what to do when empty landmarks??
+        std::vector<int> assoc_landmarks;
+        std::vector<double> sense_x;
+        std::vector<double> sense_y;
+
         for (const LandmarkObs curObs : converted) {
             int closestIdx = curObs.id - 1;
             if (closestIdx < 0) {
@@ -118,11 +124,18 @@ void ParticleFilter::updateWeights(double sensor_range,
             } else {
                 //cout << "Found non-positive weight!! : " << curWeight << "\n";
             }
+
+            //set particle associations
+            assoc_landmarks.push_back(curObs.id);
+            sense_x.push_back(curObs.x);
+            sense_y.push_back(curObs.y);
         }
 
-        if (totalWeight > 0.) {
+        SetAssociations(*it, assoc_landmarks, sense_x, sense_y);
+        if (!converted.empty()) {
             it->weight = totalWeight;
         } else {
+            it->weight = 0;
             //cout << "Found non-positive weight!! : " << totalWeight << "\n";
         }
     }
@@ -210,6 +223,7 @@ Particle ParticleFilter::SetAssociations(Particle& particle, const std::vector<i
     particle.associations= associations;
     particle.sense_x = sense_x;
     particle.sense_y = sense_y;
+    return particle;
 }
 
 string ParticleFilter::getAssociations(Particle best)
