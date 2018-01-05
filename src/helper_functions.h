@@ -9,6 +9,7 @@
 #define HELPER_FUNCTIONS_H_
 
 #include <sstream>
+#include <algorithm>
 #include <fstream>
 #include <math.h>
 #include <vector>
@@ -111,6 +112,10 @@ inline bool read_map_data(std::string filename, Map& map) {
 		// Add to landmark list of map:
 		map.landmark_list.push_back(single_landmark_temp);
 	}
+
+	// Even though data is sorted, this is a useful assumption for updateWeights!
+	// TODO: Bad compile issues here, ignoring sort for now
+	//std::sort(map.landmark_list.begin(), map.landmark_list.end());
 	return true;
 }
 

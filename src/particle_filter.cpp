@@ -31,9 +31,9 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
     dist_theta = *new normal_distribution<double>(theta, std[2]);
 
     num_particles = NUM_PARTICLES;
-    const double uniform_wieght = 1. / num_particles;
+    const double uniform_weight = 1. / num_particles;
     for (int i = 0; i < num_particles; i++) {
-        particles.push_back(Particle{i, dist_x(gen), dist_y(gen), dist_theta(gen), uniform_wieght});
+        particles.push_back(Particle{i, dist_x(gen), dist_y(gen), dist_theta(gen), uniform_weight});
         //cout << "ps: " << particles[particles.size() - 1] << endl;
     }
 
@@ -67,9 +67,10 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 }
 
 void ParticleFilter::dataAssociation(std::vector<LandmarkObs> in_range, std::vector<LandmarkObs>& observations) {
-    for (LandmarkObs curObs : observations) {
+    for (auto it = observations.begin() ; it != observations.end(); it++) {
+        const LandmarkObs curObs = *it;
         double shortest = INFINITY;
-        int closest_landmark = 0; //TODO: better default when in_range is empty??
+        int closest_landmark = 1; //TODO: better default when in_range is empty??
         for (const LandmarkObs curL : in_range) {
             const double curDist = dist(curL.x, curL.y, curObs.x, curObs.y);
             if (curDist < shortest) {
@@ -78,7 +79,7 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> in_range, std::vec
             }
         }
 
-        curObs.id = closest_landmark;
+        it->id = closest_landmark;
     }
 }
 
@@ -109,7 +110,7 @@ std::vector<LandmarkObs> ParticleFilter::convert_observations(const Particle par
      * y_m​ = y_p​ + (sin(θ) * x_c) + (cos(θ) * y_c​)
      */
 
-    for (const LandmarkObs curObs : observations) {
+    for (LandmarkObs curObs : observations) {
         const double x = particle.x + cos(particle.theta) * curObs.x - sin(particle.theta) * curObs.y;
         const double y = particle.y + sin(particle.theta) * curObs.x + cos(particle.theta) * curObs.y;
         converted.push_back({curObs.id, x, y});
@@ -124,7 +125,6 @@ std::vector<LandmarkObs> ParticleFilter::convert_observations(const Particle par
 std::vector<LandmarkObs> ParticleFilter::find_in_range(const std::vector<Map::single_landmark_s> map_landmarks,
                                                        const Particle particle,
                                                        const double sensor_range) {
-
     vector<LandmarkObs> in_range;
     for (const Map::single_landmark_s curLandmark : map_landmarks) {
         const double cur_dist = dist(particle.x, particle.y, curLandmark.x_f, curLandmark.y_f);

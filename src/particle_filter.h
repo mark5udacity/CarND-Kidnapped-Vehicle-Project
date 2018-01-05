@@ -138,6 +138,8 @@ public:
 	const bool initialized() const {
 		return is_initialized;
 	}
+
+	double calculateWeight(const LandmarkObs obs, const LandmarkObs landmarkObs, const double std[]);
 };
 
 #endif /* PARTICLE_FILTER_H_ */
