@@ -104,16 +104,7 @@ void ParticleFilter::updateWeights(double sensor_range,
         std::vector<double> sense_y;
 
         for (const LandmarkObs curObs : converted) {
-            int closestIdx = curObs.id - 1;
-            if (closestIdx < 0) {
-                // Or could throw exception and check this much earlier than this point
-                cerr << "ERROR: Did not expect any Landmark ID to be less than 1, but was: " << closestIdx + 1 << "\n";
-                cout << "ERROR: Did not expect any Landmark ID to be less than 1, but was: " << closestIdx + 1 << "\n";
-                continue;
-            }
-
-            const Map::single_landmark_s closest = map_landmarks.landmark_list[closestIdx];
-            const LandmarkObs closestLandmark = {closest.id_i, closest.x_f, closest.y_f};
+            const LandmarkObs closestLandmark = findClosest(curObs.id, map_landmarks.landmark_list);
             const double curWeight = calculateWeight(curObs, closestLandmark, std_landmark);
             if (curWeight > 0.) {
                 totalWeight *= curWeight;
@@ -174,6 +165,38 @@ std::vector<LandmarkObs> ParticleFilter::find_in_range(const std::vector<Map::si
     }
 
     return in_range;
+}
+
+// Perf consideration: maybe landmarks should be part of initialization, that way we can move this into a set and lookup becomes O(1)
+const LandmarkObs ParticleFilter::findClosest(int landmark_id, std::vector<Map::single_landmark_s> landmarks) {
+    Map::single_landmark_s* closest = NULL;
+
+    // Try by index first
+    int closestIdx = landmark_id - 1;
+    if (closestIdx < 0) {
+        // Or could throw exception and check this much earlier than this point
+        cout << "WARN: Did not expect any Landmark ID to be less than 1, but was: " << closestIdx + 1 << "\n";
+    } else if (landmarks[closestIdx].id_i == landmark_id) {
+        closest = &landmarks[closestIdx];
+    } else {
+        cout << "WARN: Landmark ID did not match at expected index " << closestIdx + 1 << "\n";
+    }
+
+    // If above fails, do a O(n) list search
+    if (!closest) {
+        for (Map::single_landmark_s curLm : landmarks) {
+            if (curLm.id_i == landmark_id) {
+                closest = &curLm;
+                break;
+            }
+        }
+    }
+
+    if (!closest) {
+        throw std::invalid_argument("Couldn't find landmark ID!  Should never happen unless something is wrong with identifying landmarks!");
+    }
+
+    return {closest->id_i, closest->x_f, closest->y_f};
 }
 
 double ParticleFilter::calculateWeight(const LandmarkObs obs, const LandmarkObs lmark, const double std[]) {

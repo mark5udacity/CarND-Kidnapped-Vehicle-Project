@@ -52,6 +52,12 @@ private:
 
 	// helper functions
 
+    // Calculates weight of an observation to given landmark, basic L2 distance measurement
+    double calculateWeight(const LandmarkObs obs, const LandmarkObs landmarkObs, const double std[]);
+
+    // Find closet landmark given id
+    const LandmarkObs findClosest(int landmark_id, std::vector<Map::single_landmark_s> vector);
+
 	// Takes vehicle-based-coord observations and translate them into map-based-coordinates
 	std::vector<LandmarkObs> convert_observations(const Particle particle, const std::vector<LandmarkObs> &observations);
 
@@ -135,8 +141,6 @@ public:
 	const bool initialized() const {
 		return is_initialized;
 	}
-
-	double calculateWeight(const LandmarkObs obs, const LandmarkObs landmarkObs, const double std[]);
 };
 
 #endif /* PARTICLE_FILTER_H_ */
