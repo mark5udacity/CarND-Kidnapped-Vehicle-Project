@@ -6,17 +6,10 @@
  */
 
 #include <random>
-#include <algorithm>
-#include <iostream>
-#include <numeric>
-#include <math.h> 
 #include <iostream>
 #include <sstream>
-#include <string>
-#include <iterator>
 
 #include "particle_filter.h"
-#include "helper_functions.h"
 
 using namespace std;
 
@@ -47,7 +40,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
     is_initialized = true;
 }
 
-void ParticleFilter::prediction(double delta_t, double std_pos[], double velocity, double yaw_rate) {
+void ParticleFilter::prediction(double delta_t, double velocity, double yaw_rate) {
 
     /*
      * Transformation equations
